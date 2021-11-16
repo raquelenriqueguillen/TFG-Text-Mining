@@ -303,7 +303,7 @@ tweets_ordenados %>% select(usuario, token) %>% distinct() %>% group_by(usuario)
 # 4 sanchezcastejon               8949
 
 ```
-Y vemos de nuevo que *pablocasado_* destaca por usar más palabras distintas, pero en este caso no se desmarca con una cantidad tan grande, ya que le sigue *PabloIglesias* con 10092 palabras distintas. Lo vemos gráficamente:
+Y vemos de nuevo que *pablocasado_* destaca por usar más palabras distintas, pero en este caso no se desmarca con una cantidad tan grande, ya que le sigue *PabloIglesias* con 9498 palabras distintas. Lo vemos gráficamente:
 
 ```{r}
 tweets_ordenados %>% select(usuario,token) %>% distinct() %>% ggplot(aes(x=usuario)) + geom_bar() + coord_flip() + theme_bw()
@@ -326,7 +326,7 @@ boxplot(whisker$longitud ~ whisker$usuario)
 
 ![](./images/whisker.png)
 
-Sorprenden los resultados de los tweets de *PabloIglesias*, ya que su media es más baja que el resto de usuarios y la desviación típica es relativamente alta, lo que significa que sus tweets podrían ser cortos o largos. Sin embargo, podemos decir que el resto de cuentas se comportan de una manera similar. Representamos estos resultados en una barra de error para ver la variabilidad de los datos.
+Sorprenden los resultados de los tweets de *PabloIglesias*, ya que su media es más baja que el resto de usuarios y la desviación típica es relativamente alta, lo que significa que sus tweets podrían ser cortos o largos. Sin embargo, podemos decir que el resto de cuentas se comportan de una manera similar. 
 
 
 ### Palabras más utilizadas por usuario y stop words
@@ -446,13 +446,13 @@ Como resultado obtenemos:
 
 ### N-gramas
 
-Puede ser interesante estudiar si existe alguna relación entre las palabras de los tweets con las que estamos trabajando. Más adelante, dentro de las técnicas estadísticas aplicadas, aplicamos las reglas de asociación, técnica que se encarga de estudiar qué palabras o conjunto de palabras tienden a coexistir en los mismos documentos(tweets). En este caso, vamos a utilizar los n-gramas para estudiar qué palabras tienden a seguir a otras inmediatamente después.
+Puede ser interesante estudiar si existe alguna relación entre las palabras de los tweets con las que estamos trabajando. Más adelante, dentro de las técnicas estadísticas aplicadas, aplicamos las reglas de asociación, técnica que se encarga de estudiar qué palabras o conjunto de palabras tienden a coexistir en los documentos(tweets) sin restrucciones en el orden de aparición en los mismos. En este caso, vamos a utilizar los n-gramas para estudiar qué palabras tienden a seguir a otras inmediatamente después.
 
 En secciones anteriores, hemos hecho uso de la función *unnest* para tokenizar por palabras, pero también podemos usarla para tokenizar en secuencias consecutivas de palabras, lo que se conoce como n-gramas. Al estudiar con qué frecuencia una palabra va seguida de otra distinta, podemos construir un modelo de las relaciones entre ellas.
 
 #### Bigramas
 
-Podemos comenzar creando lo que se conoce como *bigramas* sobre estos tweets para examinar los pares de **dos** palabras que son consecutivas. 
+Podemos comenzar creando lo que se conoce como *bigramas* sobre estos tweets para examinar los conjuntos de **dos** palabras que son consecutivas. 
 
 ```{r}
 bigrama_tweets <- tweets %>% unnest_tokens(bigrama, texto, token = "ngrams", n=2)
@@ -647,7 +647,7 @@ trigrama_tweets_limpios %>% top_n(10, n) %>% arrange(trigrama, n) %>% ggplot(aes
 
 ## Frecuencia de términos y frecuencia inversa de documentos
 
-Podemos ahora estudiar la importancia de ciertos términos en función a la frecuencia con la que aparecen. Sin embargo, puede ser que los resultados obtenidos solo a partir de la frecuencia no sean tan relevantes en el ámbito en el que lo estemos estudiando, por lo que se recurre al método de la frecuencia inversa, en el cual se multiplica el valor de la frecuencia de cada término por la inversa de la misma. De este modo, se reduce la importancia de los términos repetidos muchas veces que no aportan información útil.
+Podemos ahora estudiar la importancia de ciertos términos en función a la frecuencia con la que aparecen. Sin embargo, puede ser que los resultados obtenidos solo a partir de la frecuencia no sean tan relevantes en el ámbito en el que lo estamos estudiando, por lo que se recurre también a la frecuencia inversa de documentos, donde se busca la frecuencia de un término en relación con el total de documentos en el estudio. De este modo y combinando ambos resultados, se reduce la importancia de los términos repetidos muchas veces que no aportan información útil
 
 ### Frecuencia de términos (Term frecuency)
 
@@ -678,23 +678,23 @@ head(tweets_tf)
 En este apartado, para obtener la frecuencia inversa de documentos, vamos a obtener en primer lugar el número total de documentos que tenemos para, en segundo lugar, buscar el número de documentos en los que aparece cada término y acabar calculando la frecuencia inversa (denotada por *idf* por su nombre en inglés).
 
 ```{r}
-documentos_total = tweets_ordenados$tweet_id %>% unique() %>% length()
+documentos_total = tweets_ordenados$tweet_id %>% unique() %>% length() #Número total de documentos
 documentos_total # [1] 7595
 
-tweets_idf <- tweets_ordenados %>% distinct(token, tweet_id) %>% group_by(token) %>% summarise(n_documentos = n())
+tweets_idf <- tweets_ordenados %>% distinct(token, tweet_id) %>% group_by(token) %>% summarise(n_documentos = n()) #n_documentos es el número de documentos que contienen al término
 
-tweets_idf <- tweets_idf %>% mutate(idf = n_documentos / documentos_total) %>% arrange(desc(idf))
+tweets_idf <- tweets_idf %>% mutate(idf = log(documentos_total/n_documentos)) %>% arrange(desc(idf))
 head(tweets_idf)
 
 # # A tibble: 6 x 3
-#   token    n_documentos    idf
-#   <chr>           <int>  <dbl>
-# 1 españa           1525 0.201 
-# 2 gobierno         1492 0.196 
-# 3 hoy              1159 0.153 
-# 4 sánchez          1121 0.148 
-# 5 país              619 0.0815
-# 6 gracias           545 0.0718
+#   token          n_documentos   idf
+#   <chr>                 <int> <dbl>
+# 1 aaandrios                 1  8.94
+# 2 aajanuch                  1  8.94
+# 3 aarmisén                  1  8.94
+# 4 ábalosdimisión            1  8.94
+# 5 abanderan                 1  8.94
+# 6 abanderar                 1  8.94
 
 ```
 
@@ -706,25 +706,26 @@ Podemos ahora hacer una tabla en la que aparezcan ambas frecuencias.
 tweets_tf_idf <- left_join(x=tweets_tf, y=tweets_idf, by="token") %>% ungroup()
 tweets_tf_idf <- tweets_tf_idf %>% mutate(tf_idf = tf * idf)
 tweets_tf_idf %>% select(-tweet_id) %>% head()
+
 # # A tibble: 6 x 7
-#   token            n total_n     tf n_documentos      idf     tf_idf
-#   <chr>        <int>   <int>  <dbl>        <int>    <dbl>      <dbl>
-# 1 feminoacid       1       3 0.333             1 0.000132 0.0000439 
-# 2 fuertecito       1       3 0.333             1 0.000132 0.0000439 
-# 3 respiro          1       3 0.333             2 0.000263 0.0000878 
-# 4 accionariado     1      23 0.0435            1 0.000132 0.00000572
-# 5 airbnb           1      23 0.0435            1 0.000132 0.00000572
-# 6 antonio          1      23 0.0435           18 0.00237  0.000103 
+#   token            n total_n     tf n_documentos   idf tf_idf
+#   <chr>        <int>   <int>  <dbl>        <int> <dbl>  <dbl>
+# 1 feminoacid       1       3 0.333             1  8.94  2.98 
+# 2 fuertecito       1       3 0.333             1  8.94  2.98 
+# 3 respiro          1       3 0.333             2  8.24  2.75 
+# 4 accionariado     1      23 0.0435            1  8.94  0.388
+# 5 airbnb           1      23 0.0435            1  8.94  0.388
+# 6 antonio          1      23 0.0435           18  6.04  0.263
 
 ```
 
-Y entonces vemos que para el primer tweet, los tres primeros términos que aparecen una vez tienen la misma frecuencia, pero distinta frecuencia inversa, ya que no todos los términos aparecen con la misma frecuencia en el conjunto de todos los tweets. Del mismo modo ocurre con los otros dos términos.
+Y entonces vemos que para el primer tweet, los tres primeros términos que aparecen una vez tienen la misma frecuencia, pero distinta frecuencia inversa, ya que no todos los términos aparecen con la misma frecuencia en el conjunto de todos los tweets. 
 
 
 
 # Clustering
 
-Tras hacer este análisis exploratorio y pasar a la siguiente sección en la que se aplican técnicas estadísticas a los datos, necesitamos hacer una representación numérica de estos, en el que se podría usar el valor ya obtenido de *tf-idf* y de forma que estén en lo que se conoce como *term document matrix*, matriz que describe la frecuencia de términos que aparecen en una colección de documentos.
+Tras hacer este análisis exploratorio y pasar a la siguiente sección en la que se aplican técnicas estadísticas y de minería a los datos, necesitamos hacer una representación numérica de estos, de forma que estén en lo que se conoce como *term document matrix*, matriz que describe la frecuencia de términos que aparecen en una colección de documentos.
 
 ```{r}
 corpus <- Corpus(VectorSource(tweets_ordenados$token)) #Usamos tweets_ordenados$token porque ya está libre de stop words
@@ -807,7 +808,7 @@ fviz_nbclust(m, kmeans, method = "wss", k.max = 20)
 ```
 ![](./images/wss.png)
 
-Podemos elegir k=5 como mejor opción para clustering y ver qué porcentaje obtenemos al dividir la suma de los cuadrados entre grupos entre la suma total de cuadrados.
+Podemos elegir k=5 como mejor opción para clustering y ver qué porcentaje obtenemos al dividir la suma de los cuadrados entre grupos entre la suma total de cuadrados, ya que es uno de los indicadores de cómo de "buena" es la agrupación con 5 clústeres.
 
 ```{r}
 kc <- kmeans(m, 5)
@@ -881,7 +882,7 @@ Vemos que teniendo estos tres métodos en cuenta, a medida que aumentamos k, ten
 
 #  Reglas de asociación
 
-Las reglas de asociación se representan con implicaciones de la forma X -> Y, donde X e Y son conjuntos de ítems disjuntos. En esta sección de la experimentación se pretende encontrar estas relaciones de coocurrencia entre los distintos conjuntos de ítems. Para ello, se hace uso de la elección de ciertos parámetros como el soporte y la confianza para la obtención de resultados. Para ello vamos a utilizar el algoritmo Apriori.
+Las reglas de asociación se representan con implicaciones de la forma X -> Y, donde X e Y son conjuntos de ítems disjuntos. En esta sección de la experimentación se pretende encontrar estas relaciones de coocurrencia entre los distintos conjuntos de ítems. Para la generación de las mismas, se establecen valores mínimos de soporte y confianza, y se utiliza el algoritmo Apriori.
 
 ## Evaluación
 
@@ -905,6 +906,8 @@ tweets_AR <- tweets_ordenados %>% select(tweet_id, token) #tweets para las regla
 ```
 
 Cada línea o token contiene una sola palabra, por ello hay incluida una columna con el ID del tweet (transacción) al que corresponde cada palabra (token).
+
+Para la aplicación de esta técnica, se hace uso del paquete *arules*.
 
 ```{r}
 library(arules)
@@ -932,7 +935,7 @@ ggplot(tamanos_transacciones, aes(x = tamano)) +  geom_density(fill = "orangered
 ```
 ![](./images/tamanoTransacciones2.png)
 
-Lo que ha supuesto una clara reducción de transacciones.
+Lo que ha supuesto una clara reducción en el tamaño de transacciones.
 
 ### Soporte y confianza
 
@@ -1079,7 +1082,7 @@ Los *p-value's* obtenidos del test son pequeños, por lo que es muy probable que
 
 ### Visualización
 
-Para la visualización de los resultados, existe un paquete llamado *arulesViz* que nos permite visualizar las reglas de asociación obtenidas de numerosas formas, pero solo vamos a usar tres, tal y como se muestra.
+Para la visualización de los resultados, existe un paquete llamado *arulesViz* que nos permite visualizar las reglas de asociación obtenidas de numerosas formas. A continuación se muestran cinco formas distintas de visualizarlas.
 
 ```{r}
 library(arulesViz)
@@ -1123,8 +1126,6 @@ plot(reglas, method="graph")
 
 
 # Clasificación de tweets 
-
-En puntos anteriores hemos creado una representación numérica de las palabras (conocido como *bag of words*), en el que se identifica cada palabra por un número, en este caso el *tf-idf*.
 
 En esta sección se va a construir un modelo de aprendizaje estadístico basado en *support vector machines* (SVM) para predecir cuál es la autoría de los tweets. Este método se utilizó en su comienzo para la clasificación binaria, pero hoy en día se utiliza para clasificación múltiple y regresión. Se compararán por un lado los tweets de los usuarios *@pablocasado_* y *@InesArrimadas*, y por otro lado los de *@sanchezcastejon* y *@PabloIglesias*.
 
@@ -1181,7 +1182,7 @@ table(tweets_test_is$usuario)/length(tweets_test_is$usuario)
 
 ```
 
-Pasamos entonces a crear la matriz con la que se trabajará:
+Pasamos entonces a crear la matriz con la que se trabajará, y para ello se hace uso del paquete *quanteda*.
 
 ```{r}
 library(quanteda)
@@ -1534,7 +1535,7 @@ paste("Porcentaje de error =", round(error2,2), "%")
 
 # Análisis de sentimientos
 
-Para desarrollar un análisis de sentimientos, contamos con varios paquetes que contienen diccionarios de sentimientos que nos ayudan a clasificar las palabras de distintas formas. En nuestro caso, y como el estudio se va a realizar con palabras en español, se va a utilizar el paquete *syuzhet*, el cual tiene cuatro diccionarios de sentimientos, los cuales son: *NRC, Stanford, Afinn* y *Bing*. El primero mencionado ofrece el diccionario en español y permite clasificar si un sentimiento es positivo o negativo, así como 8 emociones con el mismo fin. Estas emociones son: *enfado, anticipación, disgusto, miedo, alegría, tristeza, sorpresa* y *confianza*. Hay que tener en cuenta que se trabaja con traducciones automática de términos, por lo que podría haber fallos sujetos a la subjetividad del lenguaje. También cabe destacar que los resultados mostrados serán en inglés, a pesar de utilizar el diccionario en español, ya que la salida no está traducida.
+Para desarrollar un análisis de sentimientos, contamos con varios paquetes que contienen diccionarios de sentimientos que nos ayudan a clasificar las palabras de distintas formas. En nuestro caso, y como el estudio se va a realizar con palabras en español, se va a utilizar el paquete *syuzhet*, el cual tiene cuatro diccionarios de sentimientos. Estos son: *NRC, Stanford, Afinn* y *Bing*. El primero mencionado ofrece el diccionario en español y permite clasificar si un sentimiento es positivo o negativo, así como 8 emociones con el mismo fin. Estas emociones son: *enfado, anticipación, disgusto, miedo, alegría, tristeza, sorpresa* y *confianza*. Hay que tener en cuenta que se trabaja con traducciones automáticas de términos, por lo que podría haber fallos sujetos a la subjetividad del lenguaje. También cabe destacar que los resultados mostrados serán en inglés, a pesar de utilizar el diccionario en español, ya que la salida no está traducida.
 
 
 ```{r}
@@ -1565,7 +1566,7 @@ summary(sentimientos)
 
 ```
 
-Podemos ver que la media de los tweets es más positiva (0.1283) que negativa (0.0918). También es interesante observar valores como la mediana es cero, esto puede ser porque haya pocas palabras que tengan asignadas una emoción en el diccionario.
+Podemos ver que la media de los tweets es más positiva (0.1306) que negativa (0.09354). También es interesante observar valores como la mediana es cero, esto puede ser porque haya pocas palabras que tengan asignadas una emoción en el diccionario.
 
 
 Puede ser interesante estudiar los sentimientos separando por usuario y ver qué resultados obtenemos.
@@ -1998,7 +1999,7 @@ valor_sentimientos_arrimadas_evolucion <- (sentimientos_arrimadas_evolucion$nega
 valor_sentimientos_iglesias_evolucion <- (sentimientos_iglesias_evolucion$negative * (-1)) + sentimientos_iglesias_evolucion$positive
 valor_sentimientos_sanchez_evolucion <- (sentimientos_sanchez_evolucion$negative * (-1)) + sentimientos_sanchez_evolucion$positive
 ```
-Pasamos entonces a representar la evolución de los sentimientos, de forma que en la primera imagen tiene todas las medidas que el algoritmo utiliza y calcula (Loess Smooth, rolling mean y discrete cosine transformation), y la segunda es una normalización de las mismas. Es importante el uso de esta representación pues suaviza los resultados y podemos ver cómo evolucionan los sentimientos a lo largo del tiempo de una forma más clara.
+Pasamos entonces a representar la evolución de los sentimientos, de forma que en la primera imagen tiene todas las medidas que el algoritmo utiliza y calcula (Loess Smooth, rolling mean y discrete cosine transformation), y la segunda es una normalización del DCT. Es importante el uso de esta representación pues suaviza los resultados y podemos ver cómo evolucionan los sentimientos a lo largo del tiempo de una forma más clara.
 
 ```{r}
 simple_plot(valor_sentimientos_casado_evolucion)
